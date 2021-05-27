@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import time
 import pandas as pd
 
 from fairseq import options, tasks, checkpoint_utils
@@ -12,7 +13,7 @@ import data
 
 def main(script_args, model_args):
     split = script_args.split
-    os.path.join(model_args.features_dir, )
+    # os.path.join(model_args.features_dir, )
     predictions = predict(image_id_path=os.path.join(model_args.captions_dir, f'{split}-ids.txt'),
                           grid_features_path=os.path.join(model_args.features_dir, f'{split}-features-grid'),
                           obj_features_path=os.path.join(model_args.features_dir, f'{split}-features-obj'),
@@ -75,6 +76,7 @@ def predict(image_id_path: str,
     prediction_ids = []
     prediction_results = []
 
+    start_time = time.time()
     for sample_id in tqdm(sample_ids):
         features, locations = image_ds.read_data(sample_id)
         length = features.shape[0]
@@ -97,6 +99,9 @@ def predict(image_id_path: str,
         prediction_ids.append(sample_id)
         prediction_results.append(prediction)
 
+    end_time = time.time()
+    print("Average Time to process an image: ", ((end_time-start_time)/(len(sample_ids))))
+    print("Number of images: ", len(sample_ids))
     return pd.DataFrame.from_dict(data={
         'image_id': prediction_ids,
         'caption': prediction_results
@@ -142,4 +147,6 @@ def get_script_parser():
 
 
 if __name__ == '__main__':
+    overall_start_time = time.time()
     cli_main()
+    print("Overall time elapsed: ",  time.time()-overall_start_time)
