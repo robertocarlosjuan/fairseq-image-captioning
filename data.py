@@ -10,6 +10,8 @@ from fairseq.data import FairseqDataset, data_utils
 from torch.utils.data.dataloader import default_collate
 
 from PIL import Image
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 def split_file(split):
@@ -60,8 +62,12 @@ class ImageDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         image_path = self.image_paths[idx]
-        with Image.open(image_path).convert('RGB') as img:
-            return self.transform(img), self.image_ids[idx]
+        try:
+            with Image.open(image_path).convert('RGB') as img:
+                return self.transform(img), self.image_ids[idx]
+        except OSError:
+            print(image_path, ": image file is truncated (51 bytes not processed)")
+            exit()
 
 
 class FeaturesDataset(FairseqDataset):

@@ -1,1 +1,9 @@
 .idea
+ms-coco/**
+output/**
+output_sgb/**
+.checkpoints/**
+.checkpoints-scst/**
+*.jpg
+*.zip
+*.pyc

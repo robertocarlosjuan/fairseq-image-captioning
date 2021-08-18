@@ -13,19 +13,39 @@ csv.field_size_limit(sys.maxsize)
 FIELDNAMES_IN = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
 FIELDNAMES_OUT = FIELDNAMES_IN[:-2]
 
+def check_if_zeroone(train_custom):
+    if os.path.isfile(train_custom):
+        train_list = [train_custom]
+    else:
+        train_list = [train_custom + '.0', train_custom + '.1']
+        for x in train_list:
+            if not os.path.isfile(x):
+                return None
+    return train_list
 
-def features_files(features_dir):
+def features_files(features_dir, args):
+    train_custom = os.path.join(features_dir,'karpathy_train_resnet101_faster_rcnn_genome.tsv')
+    train_list = check_if_zeroone(train_custom)
+    valid_file = os.path.join(features_dir, f'karpathy_val_resnet101_faster_rcnn_genome.tsv')
+    valid_list = check_if_zeroone(valid_file)
+    if not valid_list:
+        valid_file = os.path.join(features_dir, f'karpathy_valid_resnet101_faster_rcnn_genome.tsv')
+        valid_list = check_if_zeroone(valid_file)
+    
+    test_list = check_if_zeroone(os.path.join(features_dir, f'karpathy_test_resnet101_faster_rcnn_genome.tsv'))
     return {
-        'train': [os.path.join(features_dir, f'karpathy_train_resnet101_faster_rcnn_genome.tsv.0'),
-                  os.path.join(features_dir, f'karpathy_train_resnet101_faster_rcnn_genome.tsv.1')],
-        'valid': [os.path.join(features_dir, f'karpathy_val_resnet101_faster_rcnn_genome.tsv')],
-        'test': [os.path.join(features_dir, f'karpathy_test_resnet101_faster_rcnn_genome.tsv')]
+        'train': train_list,
+        'valid': valid_list,
+        'test': test_list,
+        'custom': [args.custom_feature_dir]
     }
 
 
 def main(args):
-    in_features_files = features_files(args.features_dir)[args.split]
+    in_features_files = features_files(args.features_dir, args)[args.split]
     out_features_dir = os.path.join(args.output_dir, f'{args.split}-features-obj')
+    if args.split == 'custom':
+        out_features_dir = os.path.join(args.output_dir, 'valid-features-obj')
     out_metadata_file = os.path.join(out_features_dir, 'metadata.csv')
 
     os.makedirs(out_features_dir, exist_ok=True)
@@ -61,8 +81,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--features-dir',
                         help='Object features data directory.')
-    parser.add_argument('--split', choices=['train', 'valid', 'test'],
-                        help="Data split ('train', 'valid' or 'test').")
+    parser.add_argument('--split', choices=['train', 'valid', 'test', 'custom'],
+                        help="Data split ('train', 'valid', 'test' or 'custom').")
+    parser.add_argument('--custom-feature-dir', default=None,
+                        help='Custom feature directory.')
     parser.add_argument('--output-dir', default='output',
                         help='Output directory.')
     parser.add_argument('--device', default='cuda', type=torch.device,

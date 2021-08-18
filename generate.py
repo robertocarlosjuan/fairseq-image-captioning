@@ -69,7 +69,7 @@ def predict(image_id_path: str,
         image_ds = data.GridFeaturesDataset(grid_features_path, image_ids)
     elif model_args.features == 'obj':
         image_md = data.read_image_metadata(obj_features_meta_path)
-        image_ds = data.ObjectFeaturesDataset(obj_features_path, image_ids, image_md)
+        image_ds = data.ObjectFeaturesDataset(obj_features_path, sample_ids, image_md) # image_ids, image_md)
     else:
         raise ValueError(f'Invalid --features option: {model_args.features}')
 
